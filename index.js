@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const { typeToMethodMap } = require("./lib/mapper");
 const { isMongooseSchema } = require("./lib/utils");
 const { Decimal128 } = mongoose;
-const { faker } = require('@faker-js/faker/locale/en');
+const { faker } = require("@faker-js/faker/locale/en");
 
 /**
  * Handle Array fields - There are two types here
@@ -21,13 +21,13 @@ function _mockArrayDataType(schemaField, fieldName) {
 
 /**
  * Get mock value from faker for given field type
- * @param {string} fieldName 
- * @param {string} fieldType 
- * @param {object} fakerOptions 
+ * @param {string} fieldName
+ * @param {string} fieldType
+ * @param {object} fakerOptions
  */
 function _getMockValue(fieldName, fieldType, fakerOptions = {}) {
   let fakerMethod = typeToMethodMap[fieldType];
-  
+
   if (fakerMethod) {
     return faker[fakerMethod.module][fakerMethod.type]();
   }
@@ -80,17 +80,19 @@ const userSchema = new mongoose.Schema({
   birthDate: Date,
   isActive: Boolean,
   address: addressSchema,
-  hobbies: [{
-    name: {
-        type: String
+  hobbies: [
+    {
+      name: {
+        type: String,
+      },
+      years: {
+        type: Number,
+      },
     },
-    years: {
-        type: Number
-    }
-   }],
+  ],
   salary: Decimal128,
   accountBalance: BigInt,
 });
 
 const mockUserAllFields = generateMock(userSchema);
-console.log(mockUserAllFields)
+console.log(mockUserAllFields);
