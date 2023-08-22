@@ -54,9 +54,13 @@ function _getMockValue(fieldName, fieldType, fakerOptions = {}) {
  */
 function _constructFakerOptions(mongooseField) {
   const fakerOptions = {};
-  if (mongooseField?.enumValues?.length) {
+  /**
+   * Using options.enum instead of enumValues at root level of field definition
+   * since enumValues is not available in case of nested schemas.
+   */
+  if (mongooseField?.options?.enum) {
     fakerOptions.enum = true;
-    fakerOptions.enumValues = mongooseField.enumValues;
+    fakerOptions.enumValues = mongooseField.options.enum;
   }
   return fakerOptions;
 }
@@ -99,7 +103,10 @@ const addressSchema = new mongoose.Schema({
 });
 
 const field9Schema = new mongoose.Schema({
-  field91: Number,
+  field91: {
+    type: Number,
+    enum: [42, 69, 420],
+  },
   field92: String,
   field93: {
     field931: String,
@@ -121,6 +128,7 @@ const userSchema = new mongoose.Schema({
       },
       years: {
         type: Number,
+        enum: [1995, 2000, 2010, 2020, 2025],
       },
     },
   ],
@@ -131,8 +139,8 @@ const userSchema = new mongoose.Schema({
       field4: Date,
       field6: {
         field7: {
-            type: String,
-            enum: ['either this', 'or that']
+          type: String,
+          enum: ["either this", "or that"],
         },
         field9: field9Schema,
       },
