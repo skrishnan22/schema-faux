@@ -1,9 +1,9 @@
 const mongoose = require("mongoose");
-const { typeToMethodMap } = require("./lib/mapper");
+const { typeToMethodMap, commonFieldsToFakerMap } = require("./lib/mapper");
 const { isMongooseSchema } = require("./lib/utils");
 const { Decimal128 } = mongoose;
 const { faker } = require("@faker-js/faker/locale/en");
-
+const unflatten = require("flat").unflatten;
 /**
  * Handle Array fields - There are two types here
  * 1. Array of mongoose primitive data types
@@ -27,6 +27,15 @@ function _mockArrayDataType(schemaField, fieldName) {
  */
 function _getMockValue(fieldName, fieldType, fakerOptions = {}) {
   let fakerMethod = typeToMethodMap[fieldType];
+  const commonFields = Object.keys(commonFieldsToFakerMap);
+  const matchingCommonField = commonFields.find((field) =>
+    fieldName.toLowerCase().includes(field)
+  );
+
+  if (matchingCommonField) {
+    fakerMethod = commonFieldsToFakerMap[matchingCommonField];
+    return faker[fakerMethod.module][fakerMethod.type]();
+  }
 
   if (fakerMethod) {
     return faker[fakerMethod.module][fakerMethod.type]();
@@ -34,6 +43,7 @@ function _getMockValue(fieldName, fieldType, fakerOptions = {}) {
 
   return null;
 }
+
 /**
  * Create a mock object based on mongoose schema
  * @param {*} schema - mongoose schema
@@ -71,6 +81,13 @@ const addressSchema = new mongoose.Schema({
   zipCode: String,
 });
 
+const field9Schema = new mongoose.Schema({
+  field91: Number,
+  field92: String,
+  field93: {
+    field931: String,
+  },
+});
 const userSchema = new mongoose.Schema({
   email: { type: String, required: true },
   phoneNumber: String,
@@ -91,8 +108,18 @@ const userSchema = new mongoose.Schema({
     },
   ],
   salary: Decimal128,
-  accountBalance: BigInt,
+  accountBalance: Decimal128,
+  field1: {
+    field2: {
+      field4: Date,
+      field6: {
+        field7: String,
+        field9: field9Schema,
+      },
+    },
+    field3: Number,
+  },
 });
-
-const mockUserAllFields = generateMock(userSchema);
-console.log(mockUserAllFields);
+let mockUserAllFields = generateMock(userSchema);
+mockUserAllFields = unflatten(mockUserAllFields, { safe: true });
+console.log(JSON.stringify(mockUserAllFields, null, 2));
