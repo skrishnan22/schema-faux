@@ -55,3 +55,33 @@ describe('Schema with nested schema', () => {
     chai.expect(error).to.be.undefined;
   });
 });
+
+describe('Schema with enum values', () => {
+  const addressSchema = new mongoose.Schema({
+    street: String,
+    city: String,
+    zipCode: String,
+    country: {
+      type: String,
+      enum: ['India', 'USA', 'Others'],
+    },
+  });
+
+  const userSchema = new mongoose.Schema({
+    firstName: String,
+    lastName: String,
+    accountType: {
+      type: String,
+      enum: ['Savings', 'Personal'],
+    },
+    address: addressSchema,
+  });
+
+  it('Should return mock obj conforming to enum values in both root and nested schemas', () => {
+    const user = new mongoose.Document({}, userSchema);
+    const mockObj = generateMock(userSchema);
+    user.set(mockObj);
+    const error = user.validateSync();
+    chai.expect(error).to.be.undefined;
+  });
+});

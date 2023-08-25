@@ -148,7 +148,7 @@ const userSchema = new mongoose.Schema({
     field3: Number,
   },
 });
-let mockUserAllFields = generateMock(userSchema);
+const mockUserAllFields = generateMock(userSchema);
 console.log(JSON.stringify(mockUserAllFields, null, 2));
 
 module.exports.generateMock = generateMock;
