@@ -1,19 +1,21 @@
-const chai = require("chai");
-const { generateMock } = require("./index");
-const mongoose = require("mongoose");
+/* eslint-disable no-unused-expressions */
+/* eslint-disable no-undef */
+const chai = require('chai');
+const mongoose = require('mongoose');
+const { generateMock } = require('./index');
 
-describe("Basic Schema with all data types", () => {
-  it("Should throw error when valid schema is not used", () => {
+describe('Basic Schema with all data types', () => {
+  it('Should throw error when valid schema is not used', () => {
     const userSchema = {
       firstName: String,
       age: Number,
     };
     chai
       .expect(() => generateMock(userSchema))
-      .to.throw("Valid mongoose schema is required to generate mock");
+      .to.throw('Valid mongoose schema is required to generate mock');
   });
 
-  it("Should return mock object respecting mongoose schema types", () => {
+  it('Should return mock object respecting mongoose schema types', () => {
     const userSchema = new mongoose.Schema({
       firstName: String,
       lastName: String,
@@ -32,7 +34,7 @@ describe("Basic Schema with all data types", () => {
   });
 });
 
-describe("Schema with nested schema", () => {
+describe('Schema with nested schema', () => {
   const addressSchema = new mongoose.Schema({
     street: String,
     city: String,
@@ -45,7 +47,7 @@ describe("Schema with nested schema", () => {
     address: addressSchema,
   });
 
-  it("Should return mock obj conforming to both root and child schemas", () => {
+  it('Should return mock obj conforming to both root and child schemas', () => {
     const user = new mongoose.Document({}, userSchema);
     const mockObj = generateMock(userSchema);
     user.set(mockObj);

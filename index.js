@@ -1,23 +1,11 @@
-const mongoose = require("mongoose");
-const { typeToMethodMap, commonFieldsToFakerMap } = require("./lib/mapper");
-const { isMongooseSchema } = require("./lib/utils");
+/* eslint-disable no-underscore-dangle */
+const mongoose = require('mongoose');
+const { faker } = require('@faker-js/faker/locale/en');
+const { unflatten } = require('flat');
+const { typeToMethodMap, commonFieldsToFakerMap } = require('./lib/mapper');
+const { isMongooseSchema } = require('./lib/utils');
+
 const { Decimal128 } = mongoose;
-const { faker } = require("@faker-js/faker/locale/en");
-const unflatten = require("flat").unflatten;
-/**
- * Handle Array fields - There are two types here
- * 1. Array of mongoose primitive data types
- * 2. Array of subdocuments with its own schema
- * @param {*} schemaField - Field in mongoose schema of type array
- * @param {string} fieldName  - Name of the array field
- */
-function _mockArrayDataType(schemaField, fieldName) {
-  if (schemaField.schema) {
-    return [generateMock(schemaField.schema)];
-  }
-  const fieldType = schemaField["$embeddedSchemaType"].instance;
-  return [_getMockValue(fieldName, fieldType)];
-}
 
 /**
  * Get mock value from faker for given field type
@@ -28,9 +16,7 @@ function _mockArrayDataType(schemaField, fieldName) {
 function _getMockValue(fieldName, fieldType, fakerOptions = {}) {
   let fakerMethod = typeToMethodMap[fieldType];
   const commonFields = Object.keys(commonFieldsToFakerMap);
-  const matchingCommonField = commonFields.find((field) =>
-    fieldName.toLowerCase().includes(field)
-  );
+  const matchingCommonField = commonFields.find((field) => fieldName.toLowerCase().includes(field));
 
   if (fakerOptions.enum && fakerOptions.enumValues) {
     return faker.helpers.arrayElement(fakerOptions.enumValues);
@@ -47,6 +33,7 @@ function _getMockValue(fieldName, fieldType, fakerOptions = {}) {
 
   return null;
 }
+
 /**
  * Use mongoose field options like enum, min, max etc to form options to use while
  * creating faker object
@@ -64,6 +51,22 @@ function _constructFakerOptions(mongooseField) {
   }
   return fakerOptions;
 }
+
+/**
+ * Handle Array fields - There are two types here
+ * 1. Array of mongoose primitive data types
+ * 2. Array of subdocuments with its own schema
+ * @param {*} schemaField - Field in mongoose schema of type array
+ * @param {string} fieldName  - Name of the array field
+ */
+function _mockArrayDataType(schemaField, fieldName) {
+  if (schemaField.schema) {
+    // eslint-disable-next-line no-use-before-define
+    return [generateMock(schemaField.schema)];
+  }
+  const fieldType = schemaField.$embeddedSchemaType.instance;
+  return [_getMockValue(fieldName, fieldType)];
+}
 /**
  * Create a mock object based on mongoose schema
  * @param {*} schema - mongoose schema
@@ -71,7 +74,7 @@ function _constructFakerOptions(mongooseField) {
  */
 function generateMock(schema, options = {}) {
   if (!schema || !isMongooseSchema(schema)) {
-    throw new Error("Valid mongoose schema is required to generate mock");
+    throw new Error('Valid mongoose schema is required to generate mock');
   }
 
   const mock = {};
@@ -80,11 +83,9 @@ function generateMock(schema, options = {}) {
     const fieldType = field.instance;
 
     // Handle nested schemas
-    if (fieldType === "Embedded") {
+    if (fieldType === 'Embedded') {
       mock[fieldName] = generateMock(field.schema);
-    }
-    // Handle arrays
-    else if (fieldType === "Array") {
+    } else if (fieldType === 'Array') {
       mock[fieldName] = _mockArrayDataType(field, fieldName);
     } else {
       const fakerOptions = _constructFakerOptions(field);
@@ -139,7 +140,7 @@ const userSchema = new mongoose.Schema({
       field6: {
         field7: {
           type: String,
-          enum: ["either this", "or that"],
+          enum: ['either this', 'or that'],
         },
         field9: field9Schema,
       },
@@ -147,8 +148,7 @@ const userSchema = new mongoose.Schema({
     field3: Number,
   },
 });
-//let mockUserAllFields = generateMock(userSchema);
-// console.log(JSON.stringify(mockUserAllFields, null, 2));
-
+let mockUserAllFields = generateMock(userSchema);
+console.log(JSON.stringify(mockUserAllFields, null, 2));
 
 module.exports.generateMock = generateMock;
