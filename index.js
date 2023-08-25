@@ -91,8 +91,7 @@ function generateMock(schema, options = {}) {
       mock[fieldName] = _getMockValue(fieldName, fieldType, fakerOptions);
     }
   }
-
-  return mock;
+  return unflatten(mock, { safe: true });
 }
 
 // Example usage
@@ -148,6 +147,8 @@ const userSchema = new mongoose.Schema({
     field3: Number,
   },
 });
-let mockUserAllFields = generateMock(userSchema);
-mockUserAllFields = unflatten(mockUserAllFields, { safe: true });
-console.log(JSON.stringify(mockUserAllFields, null, 2));
+//let mockUserAllFields = generateMock(userSchema);
+// console.log(JSON.stringify(mockUserAllFields, null, 2));
+
+
+module.exports.generateMock = generateMock;
