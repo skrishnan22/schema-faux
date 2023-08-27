@@ -8,6 +8,18 @@ const { isMongooseSchema } = require('./lib/utils');
 const { Decimal128 } = mongoose;
 
 /**
+ * Extract min/max validator values for String & Number schema types
+ * Min/Max can be a Number or Array
+ * @param {Number | Array} validator
+ * @returns
+ */
+function _getMinMaxFromSchema(validator) {
+  if (Array.isArray(validator)) {
+    return validator[0];
+  }
+  return validator;
+}
+/**
  * Get mock value from faker for given field type
  * @param {string} fieldName
  * @param {string} fieldType
@@ -17,10 +29,22 @@ function _getMockValue(fieldName, fieldType, fakerOptions = {}) {
   let fakerMethod = typeToMethodMap[fieldType];
   const commonFields = Object.keys(commonFieldsToFakerMap);
   const matchingCommonField = commonFields.find((field) => fieldName.toLowerCase().includes(field));
+  const {
+    min, max, minLength, maxLength,
+  } = fakerOptions;
 
   if (fakerOptions.enum && fakerOptions.enumValues) {
+    // TODO=> Validate if enum values follow min/max validations
     return faker.helpers.arrayElement(fakerOptions.enumValues);
   }
+  if (min || max) {
+    const options = {
+      ...(min && { min }),
+      ...(max && { max }),
+    };
+    return faker[fakerMethod.module][fakerMethod.type](options);
+  }
+
 
   if (matchingCommonField) {
     fakerMethod = commonFieldsToFakerMap[matchingCommonField];
@@ -49,6 +73,9 @@ function _constructFakerOptions(mongooseField) {
     fakerOptions.enum = true;
     fakerOptions.enumValues = mongooseField.options.enum;
   }
+  fakerOptions.min = _getMinMaxFromSchema(mongooseField?.options?.min);
+  fakerOptions.max = _getMinMaxFromSchema(mongooseField?.options?.max);
+
   return fakerOptions;
 }
 
@@ -81,7 +108,6 @@ function generateMock(schema, options = {}) {
   for (const fieldName in schema.paths) {
     const field = schema.paths[fieldName];
     const fieldType = field.instance;
-
     // Handle nested schemas
     if (fieldType === 'Embedded') {
       mock[fieldName] = generateMock(field.schema);
@@ -102,14 +128,30 @@ const addressSchema = new mongoose.Schema({
   zipCode: String,
 });
 
+const fiel931Schema = new mongoose.Schema({
+  field9311: {
+    type: String,
+    enum: ['Hey', 'there'],
+  },
+  field9312: {
+    type: Number,
+    min: 10,
+    max: 12,
+  },
+});
+
 const field9Schema = new mongoose.Schema({
   field91: {
     type: Number,
     enum: [42, 69, 420],
   },
-  field92: String,
+  field92: {
+    type: Number,
+    min: 1000,
+    max: 1050,
+  },
   field93: {
-    field931: String,
+    field931: fiel931Schema,
   },
 });
 const userSchema = new mongoose.Schema({
@@ -117,7 +159,11 @@ const userSchema = new mongoose.Schema({
   phoneNumber: String,
   firstName: { type: String, required: true },
   lastName: String,
-  age: Number,
+  age: {
+    type: Number,
+    min: [10, 'Become an adult bruh'],
+    max: 100,
+  },
   birthDate: Date,
   isActive: Boolean,
   address: addressSchema,
