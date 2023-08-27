@@ -85,3 +85,71 @@ describe('Schema with enum values', () => {
     chai.expect(error).to.be.undefined;
   });
 });
+
+describe('Schema with min/max validators', () => {
+  const userSchema = new mongoose.Schema({
+    firstName: String,
+  });
+  describe('Min validation', () => {
+    const minTestSchema = userSchema.clone();
+    const minValue = 18;
+    minTestSchema.add({
+      age: { type: Number, min: minValue },
+    });
+    it('Should return mock obj with age field greater than equal to min', () => {
+      const mockObj = generateMock(minTestSchema);
+      chai.expect(mockObj.age).to.be.greaterThanOrEqual(minValue);
+    });
+  });
+
+  describe('Max validation', () => {
+    const maxTestSchema = userSchema.clone();
+    const maxValue = 200;
+    maxTestSchema.add({
+      age: { type: Number, max: maxValue },
+    });
+    it('Should return mock obj with age field lesser than equal to max', () => {
+      const mockObj = generateMock(maxTestSchema);
+      chai.expect(mockObj.age).to.be.lessThanOrEqual(maxValue);
+    });
+  });
+
+  describe('Min & Max validation', () => {
+    const minMaxTestSchema = userSchema.clone();
+    const minValue = 18;
+    const maxValue = 200;
+    minMaxTestSchema.add({
+      age: { type: Number, min: minValue, max: maxValue },
+    });
+    it('Should return mock obj with age field within min max range', () => {
+      const mockObj = generateMock(minMaxTestSchema);
+      chai.expect(mockObj.age).to.be.greaterThanOrEqual(minValue);
+      chai.expect(mockObj.age).to.be.lessThanOrEqual(maxValue);
+    });
+  });
+
+  describe('Nested Schema', () => {
+    const nestedSchema = {
+      field1: {
+        type: Number,
+        max: 55,
+      },
+    };
+    const nestedFieldSchema = userSchema.clone();
+    const minValue = 18;
+    const maxValue = 200;
+    nestedFieldSchema.add({
+      age: { type: Number, min: [minValue, 'Too young bruh!'], max: maxValue },
+      nestedField: nestedSchema,
+      nestedArray: [nestedSchema],
+    });
+
+    it('Should return mock obj with age field within min max range', () => {
+      const user = new mongoose.Document({}, nestedFieldSchema);
+      const mockObj = generateMock(nestedFieldSchema);
+      user.set(mockObj);
+      const error = user.validateSync();
+      chai.expect(error).to.be.undefined;
+    });
+  });
+});
