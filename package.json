@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "nyc --reporter=text-summary --reporter=html mocha --timeout 15000 test.js",
-    "lint": "eslint **/*.js"
+    "lint": "eslint . --ignore-pattern 'node_modules/*'"
   },
   "author": "",
   "license": "ISC",
