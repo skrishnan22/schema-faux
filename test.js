@@ -153,3 +153,72 @@ describe('Schema with min/max validators', () => {
     });
   });
 });
+
+describe('Schema with minLength/maxLength validators', () => {
+  const userSchema = new mongoose.Schema({
+    firstName: String,
+  });
+  describe('MinLength validation', () => {
+    const minTestSchema = userSchema.clone();
+    const minLength = 10;
+    minTestSchema.add({
+      address: { type: String, minLength },
+    });
+    it('Should return mock obj with address field greater than 10 char length', () => {
+      const mockObj = generateMock(minTestSchema);
+      chai.expect(mockObj.address.length).to.be.greaterThanOrEqual(minLength);
+    });
+  });
+
+  describe('MaxLength validation', () => {
+    const maxTestSchema = userSchema.clone();
+    const maxLength = 25;
+    maxTestSchema.add({
+      address: { type: String, maxLength },
+    });
+    it('Should return mock obj with address field lesser than 25 char length', () => {
+      const mockObj = generateMock(maxTestSchema);
+      chai.expect(mockObj.address.length).to.be.lessThanOrEqual(maxLength);
+    });
+  });
+
+  describe('MinLength & MaxLength validation', () => {
+    const minMaxTestSchema = userSchema.clone();
+    const minLength = 5;
+    const maxLength = 25;
+    minMaxTestSchema.add({
+      address: { type: String, minLength, maxLength },
+    });
+    it('Should return mock obj with address field in range of minLength & maxLength', () => {
+      const mockObj = generateMock(minMaxTestSchema);
+      chai.expect(mockObj.address.length).to.be.greaterThanOrEqual(minLength);
+      chai.expect(mockObj.address.length).to.be.lessThanOrEqual(maxLength);
+    });
+  });
+
+  describe('Nested Schema', () => {
+    const nestedSchema = {
+      field1: {
+        type: String,
+        maxLength: 30,
+        minLength: 10,
+      },
+    };
+    const nestedFieldSchema = userSchema.clone();
+    const minLength = 5;
+    const maxLength = 15;
+    nestedFieldSchema.add({
+      address: { type: String, minLength: [minLength, 'Too short sir!Type more'], maxLength },
+      nestedField: nestedSchema,
+      nestedArray: [nestedSchema],
+    });
+
+    it('Should return mock obj with adress field within min max range', () => {
+      const user = new mongoose.Document({}, nestedFieldSchema);
+      const mockObj = generateMock(nestedFieldSchema);
+      user.set(mockObj);
+      const error = user.validateSync();
+      chai.expect(error).to.be.undefined;
+    });
+  });
+});
