@@ -37,6 +37,7 @@ function _getMockValue(fieldName, fieldType, fakerOptions = {}) {
     // TODO=> Validate if enum values follow min/max validations
     return faker.helpers.arrayElement(fakerOptions.enumValues);
   }
+
   if (min || max) {
     const options = {
       ...(min && { min }),
@@ -45,6 +46,17 @@ function _getMockValue(fieldName, fieldType, fakerOptions = {}) {
     return faker[fakerMethod.module][fakerMethod.type](options);
   }
 
+  if (minLength || maxLength) {
+    const options = {
+      ...(minLength && { min: minLength }),
+      ...(maxLength && { max: maxLength }),
+    };
+    /**
+     * Using different faker module since word.sample will error/return incorrect value
+     * when it can't find word within given min/max range in its corpus
+     */
+    return faker.string.sample(options);
+  }
 
   if (matchingCommonField) {
     fakerMethod = commonFieldsToFakerMap[matchingCommonField];
@@ -54,8 +66,8 @@ function _getMockValue(fieldName, fieldType, fakerOptions = {}) {
   if (fakerMethod) {
     return faker[fakerMethod.module][fakerMethod.type]();
   }
-
-  return null;
+  // Fallback/default faker value
+  return faker.string.sample();
 }
 
 /**
@@ -65,6 +77,7 @@ function _getMockValue(fieldName, fieldType, fakerOptions = {}) {
  */
 function _constructFakerOptions(mongooseField) {
   const fakerOptions = {};
+  const mongooseValidators = ['min', 'max', 'minLength', 'maxLength'];
   /**
    * Using options.enum instead of enumValues at root level of field definition
    * since enumValues is not available in case of nested schemas.
@@ -73,8 +86,11 @@ function _constructFakerOptions(mongooseField) {
     fakerOptions.enum = true;
     fakerOptions.enumValues = mongooseField.options.enum;
   }
-  fakerOptions.min = _getMinMaxFromSchema(mongooseField?.options?.min);
-  fakerOptions.max = _getMinMaxFromSchema(mongooseField?.options?.max);
+  if (mongooseField?.options) {
+    for (const validator of mongooseValidators) {
+      fakerOptions[validator] = _getMinMaxFromSchema(mongooseField.options[validator]);
+    }
+  }
 
   return fakerOptions;
 }
@@ -99,7 +115,7 @@ function _mockArrayDataType(schemaField, fieldName) {
  * @param {*} schema - mongoose schema
  * @param {object} options -  options from client for mock generation
  */
-function generateMock(schema, options = {}) {
+function generateMock(schema) {
   if (!schema || !isMongooseSchema(schema)) {
     throw new Error('Valid mongoose schema is required to generate mock');
   }
@@ -138,6 +154,11 @@ const fiel931Schema = new mongoose.Schema({
     min: 10,
     max: 12,
   },
+  field9313: {
+    type: String,
+    minLength: 5,
+    maxLength: 15,
+  },
 });
 
 const field9Schema = new mongoose.Schema({
@@ -153,12 +174,21 @@ const field9Schema = new mongoose.Schema({
   field93: {
     field931: fiel931Schema,
   },
+  field94: {
+    type: String,
+    minLength: 50,
+    maxLength: 500,
+  },
 });
 const userSchema = new mongoose.Schema({
   email: { type: String, required: true },
   phoneNumber: String,
   firstName: { type: String, required: true },
-  lastName: String,
+  lastName: {
+    type: String,
+    minLength: 5,
+    maxLength: 200,
+  },
   age: {
     type: Number,
     min: [10, 'Become an adult bruh'],
