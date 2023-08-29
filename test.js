@@ -25,6 +25,7 @@ describe('Basic Schema with all data types', () => {
       salary: mongoose.Decimal128,
       accountBalance: BigInt,
       activeAccounts: [String],
+      bufferField: Buffer,
     });
     const user = new mongoose.Document({}, userSchema);
     const mockObj = generateMock(userSchema);
@@ -39,6 +40,7 @@ describe('Schema with nested schema', () => {
     street: String,
     city: String,
     zipCode: String,
+    bufferField: Buffer,
   });
 
   const userSchema = new mongoose.Schema({

@@ -66,6 +66,10 @@ function _getMockValue(fieldName, fieldType, fakerOptions = {}) {
   if (fakerMethod) {
     return faker[fakerMethod.module][fakerMethod.type]();
   }
+
+  if (fieldType === 'Buffer') {
+    return Buffer.from(faker.string.alphanumeric(), 'utf-8');
+  }
   // Fallback/default faker value
   return faker.string.sample();
 }
