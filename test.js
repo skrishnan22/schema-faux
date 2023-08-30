@@ -25,6 +25,8 @@ describe('Basic Schema with all data types', () => {
       salary: mongoose.Decimal128,
       accountBalance: BigInt,
       activeAccounts: [String],
+      bufferField: Buffer,
+      mixedField: mongoose.Schema.Types.Mixed,
     });
     const user = new mongoose.Document({}, userSchema);
     const mockObj = generateMock(userSchema);
@@ -39,6 +41,8 @@ describe('Schema with nested schema', () => {
     street: String,
     city: String,
     zipCode: String,
+    bufferField: Buffer,
+    mixedField: mongoose.Schema.Types.Mixed,
   });
 
   const userSchema = new mongoose.Schema({
@@ -220,5 +224,45 @@ describe('Schema with minLength/maxLength validators', () => {
       const error = user.validateSync();
       chai.expect(error).to.be.undefined;
     });
+  });
+});
+
+describe('Options - requiredOnly', () => {
+  it('Should return mock object only with required fields, when requiredOnly is true', () => {
+    const addressSchema = new mongoose.Schema({
+      street: String,
+      city: {
+        type: String,
+        required: true,
+      },
+      zipCode: String,
+    });
+
+    const userSchema = new mongoose.Schema({
+      firstName: {
+        type: String,
+        required: true,
+      },
+      lastName: String,
+      age: Number,
+      activeAccounts: {
+        type: [String],
+        required: true,
+      },
+      address: {
+        type: addressSchema,
+        required: true,
+      },
+    });
+    const mockObj = generateMock(userSchema, { requiredOnly: true });
+    chai.expect(mockObj).to.haveOwnProperty('firstName');
+    chai.expect(mockObj).to.haveOwnProperty('activeAccounts');
+    chai.expect(mockObj.activeAccounts).to.be.an('array').to.have.lengthOf.at.least(1);
+    chai.expect(mockObj).to.not.haveOwnProperty('lastName');
+    chai.expect(mockObj).to.not.haveOwnProperty('age');
+    chai.expect(mockObj).to.haveOwnProperty('address');
+    chai.expect(mockObj.address).to.haveOwnProperty('city');
+    chai.expect(mockObj.address).to.not.haveOwnProperty('street');
+    chai.expect(mockObj.address).to.not.haveOwnProperty('zipCode');
   });
 });
