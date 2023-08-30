@@ -1,14 +1,28 @@
 {
   "name": "schema-faux",
-  "version": "1.0.0",
-  "description": "",
+  "version": "0.0.1",
+  "description": "Mock data generator for mongoose schemas",
   "main": "index.js",
   "scripts": {
     "test": "nyc --reporter=text-summary --reporter=html mocha --timeout 15000 test.js",
     "lint": "eslint . --ignore-pattern 'node_modules/*'"
   },
-  "author": "",
-  "license": "ISC",
+  "engines": {
+    "node": ">=14.0"
+  },
+  "keywords": [
+    "mocking",
+    "mongoose",
+    "faker",
+    "mock data",
+    "schema"
+  ],
+  "author": "S.Krishnan",
+  "bugs": {
+    "url": "https://github.com/skrishnan22/schema-faux/issues"
+  },
+  "homepage": "https://github.com/skrishnan22/schema-faux#readme",
+  "license": "MIT",
   "dependencies": {
     "@faker-js/faker": "^8.0.2",
     "flat": "^5.0.2",
