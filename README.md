@@ -1,6 +1,8 @@
 # schema-faux
 
 ![Build](https://github.com/skrishnan22/schema-faux/actions/workflows/main.yml/badge.svg)
+[![NPM
+version](https://img.shields.io/npm/v/schema-faux.svg?style=flat)](https://www.npmjs.com/package/schema-faux)
 
 **schema-faux** is a JS library designed to generate realistic mock data based on Mongoose schemas. This library is essential for testing scenarios where you need accurate simulated data. It caters to Node.js applications employing Mongoose for MongoDB integration, as well as other applications requiring lifelike fake data.
 
