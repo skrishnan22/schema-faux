@@ -58,6 +58,10 @@ function _getMockValue(fieldName, fieldType, fakerOptions = {}) {
     return faker.string.sample(options);
   }
 
+  if (fieldType === 'Buffer') {
+    return Buffer.from(faker.string.alphanumeric(), 'utf-8');
+  }
+
   if (matchingCommonField) {
     fakerMethod = commonFieldsToFakerMap[matchingCommonField];
     return faker[fakerMethod.module][fakerMethod.type]();
@@ -67,9 +71,6 @@ function _getMockValue(fieldName, fieldType, fakerOptions = {}) {
     return faker[fakerMethod.module][fakerMethod.type]();
   }
 
-  if (fieldType === 'Buffer') {
-    return Buffer.from(faker.string.alphanumeric(), 'utf-8');
-  }
   // Fallback/default faker value
   return faker.string.sample();
 }
@@ -106,10 +107,10 @@ function _constructFakerOptions(mongooseField) {
  * @param {*} schemaField - Field in mongoose schema of type array
  * @param {string} fieldName  - Name of the array field
  */
-function _mockArrayDataType(schemaField, fieldName) {
+function _mockArrayDataType(schemaField, fieldName, options) {
   if (schemaField.schema) {
     // eslint-disable-next-line no-use-before-define
-    return [generateMock(schemaField.schema)];
+    return [generateMock(schemaField.schema, options)];
   }
   const fieldType = schemaField.$embeddedSchemaType.instance;
   return [_getMockValue(fieldName, fieldType)];
@@ -119,20 +120,23 @@ function _mockArrayDataType(schemaField, fieldName) {
  * @param {*} schema - mongoose schema
  * @param {object} options -  options from client for mock generation
  */
-function generateMock(schema) {
+function generateMock(schema, options = {}) {
   if (!schema || !isMongooseSchema(schema)) {
     throw new Error('Valid mongoose schema is required to generate mock');
   }
-
   const mock = {};
   for (const fieldName in schema.paths) {
     const field = schema.paths[fieldName];
     const fieldType = field.instance;
+    if (options.requiredOnly && !field?.options?.required) {
+      // eslint-disable-next-line no-continue
+      continue;
+    }
     // Handle nested schemas
     if (fieldType === 'Embedded') {
-      mock[fieldName] = generateMock(field.schema);
+      mock[fieldName] = generateMock(field.schema, options);
     } else if (fieldType === 'Array') {
-      mock[fieldName] = _mockArrayDataType(field, fieldName);
+      mock[fieldName] = _mockArrayDataType(field, fieldName, options);
     } else {
       const fakerOptions = _constructFakerOptions(field);
       mock[fieldName] = _getMockValue(fieldName, fieldType, fakerOptions);
@@ -145,7 +149,10 @@ function generateMock(schema) {
 const addressSchema = new mongoose.Schema({
   street: String,
   city: String,
-  zipCode: String,
+  zipCode: {
+    type: String,
+    required: true,
+  },
 });
 
 const fiel931Schema = new mongoose.Schema({
@@ -157,6 +164,7 @@ const fiel931Schema = new mongoose.Schema({
     type: Number,
     min: 10,
     max: 12,
+    required: true,
   },
   field9313: {
     type: String,
@@ -176,7 +184,10 @@ const field9Schema = new mongoose.Schema({
     max: 1050,
   },
   field93: {
-    field931: fiel931Schema,
+    field931: {
+      type: fiel931Schema,
+      required: true,
+    },
   },
   field94: {
     type: String,
@@ -200,18 +211,25 @@ const userSchema = new mongoose.Schema({
   },
   birthDate: Date,
   isActive: Boolean,
-  address: addressSchema,
-  hobbies: [
-    {
-      name: {
-        type: String,
+  address: {
+    type: addressSchema,
+    required: true,
+  },
+  hobbies: {
+    type: [
+      {
+        name: {
+          type: String,
+          required: true,
+        },
+        years: {
+          type: Number,
+          enum: [1995, 2000, 2010, 2020, 2025],
+        },
       },
-      years: {
-        type: Number,
-        enum: [1995, 2000, 2010, 2020, 2025],
-      },
-    },
-  ],
+    ],
+    required: true,
+  },
   salary: Decimal128,
   accountBalance: Decimal128,
   field1: {
@@ -222,13 +240,16 @@ const userSchema = new mongoose.Schema({
           type: String,
           enum: ['either this', 'or that'],
         },
-        field9: field9Schema,
+        field9: {
+          type: field9Schema,
+          required: true,
+        },
       },
     },
     field3: Number,
   },
 });
-const mockUserAllFields = generateMock(userSchema);
+const mockUserAllFields = generateMock(userSchema, { requiredOnly: true });
 console.log(JSON.stringify(mockUserAllFields, null, 2));
 
 module.exports.generateMock = generateMock;
