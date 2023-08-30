@@ -1,0 +1,7 @@
+.github
+example.js
+.nyc_output/
+coverage
+test.js
+.vscode
+.eslintrc.json
